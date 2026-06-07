@@ -1,22 +1,19 @@
 const express = require('express');
 const dotenv = require('dotenv');
-dotenv.config();
-
-const connectDB = require('./config/db');
 const cors = require('cors');
+const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const receiptRoutes = require('./routes/receipts');
 
+dotenv.config();
 connectDB();
 
 const app = express();
 
-import cors from 'cors'
-
 app.use(cors({
-  origin: 'https://slipsafe.vercel.app',
+  origin: ['https://slipsafe.vercel.app', 'http://localhost:5173'],
   credentials: true
-}))
+}));
 
 app.use(express.json());
 
