@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import axios from 'axios'
 
-const API = 'http://localhost:5000/api'
+const API = 'https://slipsafe.onrender.com/api'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })

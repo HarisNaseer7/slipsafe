@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const API = 'http://localhost:5000/api'
+const API = 'https://slipsafe.onrender.com/api'
 
 function ReceiptCard({ receipt, index, total }) {
   const date = new Date(receipt.createdAt).toLocaleDateString('en-PK', {

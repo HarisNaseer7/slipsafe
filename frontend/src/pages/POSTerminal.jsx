@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import axios from 'axios'
 
-const API = 'http://localhost:5000/api'
+const API = 'https://slipsafe.onrender.com/api'
 
 const BRANDS = [
   { name: 'KHADI', location: 'Defence, Karachi', token: null },
