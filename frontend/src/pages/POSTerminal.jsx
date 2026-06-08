@@ -1,75 +1,46 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const API = 'https://slipsafe.onrender.com/api'
-
-const BRANDS = [
-  { name: 'KHADI', location: 'Defence, Karachi', token: null },
-  { name: 'BONANZA', location: 'Clifton, Karachi', token: null },
-  { name: 'KHAADI', location: 'Dolmen Mall, Karachi', token: null },
-  { name: 'OUTFITTERS', location: 'Lucky One Mall, Karachi', token: null },
-]
-
-const PRESET_ITEMS = {
-  KHADI: [
-    { name: 'Lawn Shirt', price: 2450 },
-    { name: 'Dupatta', price: 1200 },
-    { name: 'Trouser', price: 1800 },
-    { name: 'Kurta', price: 3200 },
-  ],
-  BONANZA: [
-    { name: 'Waistcoat', price: 4500 },
-    { name: 'Shalwar Kameez', price: 5200 },
-    { name: 'Shawl', price: 2800 },
-  ],
-  KHAADI: [
-    { name: 'Printed Kurta', price: 3800 },
-    { name: 'Embroidered Shirt', price: 6500 },
-    { name: 'Palazzo', price: 2200 },
-  ],
-  OUTFITTERS: [
-    { name: 'Jeans', price: 4200 },
-    { name: 'T-Shirt', price: 1800 },
-    { name: 'Hoodie', price: 3500 },
-  ],
-}
+const API = import.meta.env.VITE_API_URL || 'https://slipsafe.onrender.com/api'
 
 export default function POSTerminal() {
-  const [selectedBrand, setSelectedBrand] = useState(BRANDS[0])
   const [customerEmail, setCustomerEmail] = useState('')
   const [items, setItems] = useState([])
   const [paymentMethod, setPaymentMethod] = useState('Cash')
   const [printing, setPrinting] = useState(false)
   const [printed, setPrinted] = useState(false)
   const [error, setError] = useState('')
-  const [brandEmail, setBrandEmail] = useState('')
-  const [brandPassword, setBrandPassword] = useState('')
-  const [token, setToken] = useState(null)
-  const [loggedIn, setLoggedIn] = useState(false)
+  const [products, setProducts] = useState([])
+  const [brandInfo, setBrandInfo] = useState({})
+  const navigate = useNavigate()
+  const user = JSON.parse(localStorage.getItem('user') || '{}')
 
-  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  useEffect(() => {
+    fetchProducts()
+  }, [])
 
-  const loginBrand = async () => {
+  const fetchProducts = async () => {
     try {
-      const { data } = await axios.post(`${API}/auth/login`, {
-        email: brandEmail,
-        password: brandPassword
+      const token = localStorage.getItem('token')
+      const { data } = await axios.get(`${API}/auth/products`, {
+        headers: { Authorization: `Bearer ${token}` }
       })
-      setToken(data.token)
-      setLoggedIn(true)
-      setSelectedBrand({ ...selectedBrand, name: data.user.brandName || selectedBrand.name })
-      setError('')
+      setProducts(data.products || [])
+      setBrandInfo({ location: data.location })
     } catch (err) {
-      setError('Login failed. Use your brand account credentials.')
+      console.error(err)
     }
   }
 
-  const addItem = (preset) => {
-    const existing = items.find(i => i.name === preset.name)
+  const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+
+  const addItem = (product) => {
+    const existing = items.find(i => i.name === product.name)
     if (existing) {
-      setItems(items.map(i => i.name === preset.name ? { ...i, quantity: i.quantity + 1 } : i))
+      setItems(items.map(i => i.name === product.name ? { ...i, quantity: i.quantity + 1 } : i))
     } else {
-      setItems([...items, { ...preset, quantity: 1 }])
+      setItems([...items, { ...product, quantity: 1 }])
     }
   }
 
@@ -83,10 +54,11 @@ export default function POSTerminal() {
     setPrinting(true)
     setError('')
     try {
+      const token = localStorage.getItem('token')
       await axios.post(`${API}/receipts/send`, {
         customerEmail,
-        brandName: selectedBrand.name,
-        location: selectedBrand.location,
+        brandName: user.brandName,
+        location: brandInfo.location,
         items: items.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
         total,
         paymentMethod,
@@ -106,41 +78,9 @@ export default function POSTerminal() {
     setPrinting(false)
   }
 
-  if (!loggedIn) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <div className="bg-gray-800 rounded-2xl p-8 w-full max-w-md">
-          <div className="text-center mb-6">
-            <p className="text-4xl mb-2">🖥️</p>
-            <h1 className="text-white text-2xl font-bold">POS Terminal</h1>
-            <p className="text-gray-400 text-sm mt-1">Login with your brand account</p>
-          </div>
-          {error && <div className="bg-red-900 text-red-300 p-3 rounded-lg mb-4 text-sm">{error}</div>}
-          <div className="space-y-4">
-            <input
-              type="email"
-              value={brandEmail}
-              onChange={e => setBrandEmail(e.target.value)}
-              placeholder="Brand email"
-              className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <input
-              type="password"
-              value={brandPassword}
-              onChange={e => setBrandPassword(e.target.value)}
-              placeholder="Password"
-              className="w-full bg-gray-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <button
-              onClick={loginBrand}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700"
-            >
-              Login to POS
-            </button>
-          </div>
-        </div>
-      </div>
-    )
+  const logout = () => {
+    localStorage.clear()
+    navigate('/login')
   }
 
   if (printed) {
@@ -159,33 +99,45 @@ export default function POSTerminal() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-2xl font-bold">🖥️ POS Terminal</h1>
-            <p className="text-gray-400 text-sm">{selectedBrand.name} — {selectedBrand.location}</p>
+            <p className="text-gray-400 text-sm">{user.brandName} — {brandInfo.location}</p>
           </div>
-          <div className="bg-green-500 px-3 py-1 rounded-full text-xs font-bold">● LIVE</div>
+          <div className="flex items-center gap-3">
+            <div className="bg-green-500 px-3 py-1 rounded-full text-xs font-bold">● LIVE</div>
+            <button onClick={logout} className="bg-gray-700 px-3 py-1 rounded-lg text-xs hover:bg-gray-600">Logout</button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left — Items */}
           <div>
             <h2 className="text-gray-400 text-sm uppercase tracking-widest mb-3">Quick Add Items</h2>
-            <div className="grid grid-cols-2 gap-2 mb-4">
-              {(PRESET_ITEMS[selectedBrand.name] || PRESET_ITEMS.KHADI).map((item, i) => (
+            {products.length === 0 ? (
+              <div className="bg-gray-800 rounded-xl p-6 text-center mb-4">
+                <p className="text-gray-500 text-sm">No products set up yet</p>
                 <button
-                  key={i}
-                  onClick={() => addItem(item)}
-                  className="bg-gray-800 hover:bg-gray-700 p-3 rounded-xl text-left transition"
+                  onClick={() => navigate('/setup')}
+                  className="mt-3 text-blue-400 text-sm hover:underline"
                 >
-                  <p className="font-medium text-sm">{item.name}</p>
-                  <p className="text-blue-400 text-xs mt-1">Rs.{item.price.toLocaleString()}</p>
+                  → Set up products
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 mb-4">
+                {products.map((product, i) => (
+                  <button
+                    key={i}
+                    onClick={() => addItem(product)}
+                    className="bg-gray-800 hover:bg-gray-700 p-3 rounded-xl text-left transition"
+                  >
+                    <p className="font-medium text-sm">{product.name}</p>
+                    <p className="text-blue-400 text-xs mt-1">Rs.{product.price?.toLocaleString()}</p>
+                  </button>
+                ))}
+              </div>
+            )}
 
-            {/* Cart */}
             <h2 className="text-gray-400 text-sm uppercase tracking-widest mb-3">Cart</h2>
             <div className="bg-gray-800 rounded-xl p-4 min-h-32">
               {items.length === 0 ? (
@@ -196,7 +148,7 @@ export default function POSTerminal() {
                     <div key={i} className="flex justify-between items-center">
                       <div>
                         <p className="text-sm font-medium">{item.name}</p>
-                        <p className="text-xs text-gray-400">x{item.quantity} × Rs.{item.price.toLocaleString()}</p>
+                        <p className="text-xs text-gray-400">x{item.quantity} × Rs.{item.price?.toLocaleString()}</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <p className="text-blue-400 font-bold">Rs.{(item.price * item.quantity).toLocaleString()}</p>
@@ -208,14 +160,12 @@ export default function POSTerminal() {
               )}
             </div>
 
-            {/* Total */}
             <div className="bg-blue-900 rounded-xl p-4 mt-3 flex justify-between items-center">
               <span className="font-bold text-lg">TOTAL</span>
               <span className="font-black text-2xl text-blue-300">Rs.{total.toLocaleString()}</span>
             </div>
           </div>
 
-          {/* Right — Customer & Payment */}
           <div>
             <h2 className="text-gray-400 text-sm uppercase tracking-widest mb-3">Customer Details</h2>
             <div className="bg-gray-800 rounded-xl p-4 mb-4">
@@ -248,7 +198,6 @@ export default function POSTerminal() {
 
             {error && <div className="bg-red-900 text-red-300 p-3 rounded-lg mb-4 text-sm">{error}</div>}
 
-            {/* Print Button */}
             <button
               onClick={printReceipt}
               disabled={printing}
@@ -260,6 +209,13 @@ export default function POSTerminal() {
             <p className="text-gray-600 text-xs text-center mt-3">
               Receipt will appear instantly in customer's SlipSafe wallet
             </p>
+
+            <button
+              onClick={() => navigate('/setup')}
+              className="w-full mt-3 bg-gray-800 text-gray-400 py-2 rounded-xl text-sm hover:bg-gray-700"
+            >
+              ⚙️ Edit Products
+            </button>
           </div>
         </div>
       </div>
