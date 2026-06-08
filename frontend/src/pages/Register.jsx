@@ -18,8 +18,8 @@ export default function Register() {
       const { data } = await axios.post(`${API}/auth/register`, form)
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
-      if (data.user.role === 'brand') navigate('/brand')
-      else navigate('/dashboard')
+      if (data.user.role === 'brand') navigate('/setup')
+else navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed')
     }

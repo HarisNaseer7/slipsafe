@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import CustomerDashboard from './pages/CustomerDashboard'
-import BrandDashboard from './pages/BrandDashboard'
+import ProductSetup from './pages/ProductSetup'
 import POSTerminal from './pages/POSTerminal'
 
 const PrivateRoute = ({ children }) => {
@@ -18,8 +18,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<PrivateRoute><CustomerDashboard /></PrivateRoute>} />
-        <Route path="/brand" element={<PrivateRoute><BrandDashboard /></PrivateRoute>} />
-        <Route path="/pos" element={<POSTerminal />} />
+        <Route path="/setup" element={<PrivateRoute><ProductSetup /></PrivateRoute>} />
+        <Route path="/pos" element={<PrivateRoute><POSTerminal /></PrivateRoute>} />
       </Routes>
     </BrowserRouter>
   )

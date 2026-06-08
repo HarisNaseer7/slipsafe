@@ -18,8 +18,8 @@ export default function Login() {
       const { data } = await axios.post(`${API}/auth/login`, form)
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
-      if (data.user.role === 'brand') navigate('/brand')
-      else navigate('/dashboard')
+      if (data.user.role === 'brand') navigate('/pos')
+else navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed')
     }
