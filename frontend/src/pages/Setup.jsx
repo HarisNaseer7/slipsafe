@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-
-const API = 'https://slipsafe.onrender.com/api'
+import api from '../api'
 
 export default function Setup() {
   const navigate = useNavigate()
@@ -29,23 +27,19 @@ export default function Setup() {
   ]
 
   useEffect(() => {
+    const fetchExisting = async () => {
+      try {
+        const { data } = await api.get('/auth/products')
+        setProducts(data.products || [])
+        setLocation(data.location || '')
+        setCategory(data.category || 'Shopping')
+      } catch (err) {
+        console.error(err)
+      }
+      setLoading(false)
+    }
     fetchExisting()
   }, [])
-
-  const fetchExisting = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const { data } = await axios.get(`${API}/auth/products`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setProducts(data.products || [])
-      setLocation(data.location || '')
-      setCategory(data.category || 'Shopping')
-    } catch (err) {
-      console.error(err)
-    }
-    setLoading(false)
-  }
 
   const addProduct = () => {
     if (!newProduct.name.trim()) { setError('Enter product name'); return }
@@ -73,14 +67,11 @@ export default function Setup() {
     setSaving(true)
     setError('')
     try {
-      const token = localStorage.getItem('token')
-      await axios.put(`${API}/auth/setup`, {
+      await api.post('/auth/products', {
         brandName: brandName.trim(),
         location: location.trim(),
         category,
         products
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       })
 
       // Update local user

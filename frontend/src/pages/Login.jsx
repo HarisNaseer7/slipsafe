@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import axios from 'axios'
-
-const API = 'https://slipsafe.onrender.com/api'
+import api from '../api'
 
 export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -15,11 +13,11 @@ export default function Login() {
     setLoading(true)
     setError('')
     try {
-      const { data } = await axios.post(`${API}/auth/login`, form)
+      const { data } = await api.post('/auth/login', form)
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       if (data.user.role === 'brand') navigate('/pos')
-else navigate('/dashboard')
+      else navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed')
     }

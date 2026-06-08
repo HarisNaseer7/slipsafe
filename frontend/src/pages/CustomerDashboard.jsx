@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-
-const API = 'https://slipsafe.onrender.com/api'
+import api from '../api'
 
 function ReceiptCard({ receipt, index, total }) {
   const date = new Date(receipt.createdAt).toLocaleDateString('en-PK', {
@@ -87,21 +85,17 @@ export default function CustomerDashboard() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   useEffect(() => {
+    const fetchReceipts = async () => {
+      try {
+        const { data } = await api.get('/receipts/my')
+        setReceipts(data.receipts)
+      } catch (err) {
+        console.error(err)
+      }
+      setLoading(false)
+    }
     fetchReceipts()
   }, [])
-
-  const fetchReceipts = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const { data } = await axios.get(`${API}/receipts/my`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setReceipts(data.receipts)
-    } catch (err) {
-      console.error(err)
-    }
-    setLoading(false)
-  }
 
   const logout = () => {
     localStorage.clear()

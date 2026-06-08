@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
-
-const API = 'https://slipsafe.onrender.com/api'
+import api from '../api'
 
 export default function POSTerminal() {
   const [customerEmail, setCustomerEmail] = useState('')
@@ -17,21 +15,17 @@ export default function POSTerminal() {
   const user = JSON.parse(localStorage.getItem('user') || '{}')
 
   useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const { data } = await api.get('/auth/products')
+        setProducts(data.products || [])
+        setBrandInfo({ location: data.location })
+      } catch (err) {
+        console.error(err)
+      }
+    }
     fetchProducts()
   }, [])
-
-  const fetchProducts = async () => {
-    try {
-      const token = localStorage.getItem('token')
-      const { data } = await axios.get(`${API}/auth/products`, {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      setProducts(data.products || [])
-      setBrandInfo({ location: data.location })
-    } catch (err) {
-      console.error(err)
-    }
-  }
 
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
@@ -54,8 +48,7 @@ export default function POSTerminal() {
     setPrinting(true)
     setError('')
     try {
-      const token = localStorage.getItem('token')
-      await axios.post(`${API}/receipts/send`, {
+      await api.post('/receipts/send', {
         customerEmail,
         brandName: user.brandName,
         location: brandInfo.location,
@@ -63,8 +56,6 @@ export default function POSTerminal() {
         total,
         paymentMethod,
         category: 'Shopping'
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
       })
       setPrinted(true)
       setTimeout(() => {

@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import axios from 'axios'
-
-const API = 'https://slipsafe.onrender.com/api'
+import api from '../api'
 
 export default function Register() {
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'customer', brandName: '' })
@@ -15,11 +13,11 @@ export default function Register() {
     setLoading(true)
     setError('')
     try {
-      const { data } = await axios.post(`${API}/auth/register`, form)
+      const { data } = await api.post('/auth/register', form)
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data.user))
       if (data.user.role === 'brand') navigate('/setup')
-else navigate('/dashboard')
+      else navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed')
     }
