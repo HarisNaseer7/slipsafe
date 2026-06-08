@@ -39,4 +39,36 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// GET /api/auth/products — fetch brand's products & info
+router.get('/products', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    res.json({
+      products: user.products || [],
+      location: user.location || '',
+      category: user.category || 'Shopping'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// POST /api/auth/products — save brand setup
+router.post('/products', protect, async (req, res) => {
+  try {
+    const { brandName, location, category, products } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { brandName, location, category, products },
+      { new: true }
+    );
+    res.json({
+      success: true,
+      user: { id: user._id, name: user.name, email: user.email, role: user.role, brandName: user.brandName }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

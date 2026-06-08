@@ -7,6 +7,14 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   role: { type: String, enum: ['customer', 'brand'], default: 'customer' },
   brandName: { type: String },
+  location: { type: String, default: '' },
+  category: { type: String, default: 'Shopping' },
+  products: [
+    {
+      name: { type: String, required: true },
+      price: { type: Number, required: true }
+    }
+  ]
 }, { timestamps: true });
 
 userSchema.pre('save', async function() {
